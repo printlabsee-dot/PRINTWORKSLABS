@@ -118,10 +118,11 @@ footer{text-align:center;color:var(--mut);font-size:13px;padding:26px 18px}
 <div class="sum"><div><span data-t="items"></span><span id="s1"></span></div><div id="drow" style="display:none"><span data-t="disc"></span><span id="s4"></span></div><div><span data-t="delivery"></span><span id="s2"></span></div><div class="t"><span data-t="total"></span><span id="s3"></span></div></div>
 <label style="display:flex;gap:8px;align-items:center;color:var(--fg)"><input type="checkbox" id="agree" required style="width:auto"><span><span data-t="agree"></span> <a href="#" onclick="go('legal');return false" data-t="legal" style="color:var(--acc)"></a></span></label>
 <button class="btn" type="submit" data-t="send"></button>
+<p id="fm" style="margin:0;font-weight:600"></p>
 </form>
 <div class="box" id="done" style="display:none;border-color:var(--acc)"><h2 data-t="thanks"></h2><p style="margin:0" id="mh" data-t="mailhint"></p><pre id="txt"></pre><button class="btn g" id="copy" data-t="copy"></button></div>
 </div>
-</main><footer><div id="soc" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px"></div><a href="#" onclick="go('about');return false" data-t="about"></a> · <a href="#" onclick="go('info');return false" data-t="info"></a> · <a href="#" onclick="go('legal');return false" data-t="legal"></a> · <a id="ml"></a><br>© PrintWorksLabs</footer>
+</main><footer><div id="soc" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px"></div><a href="#" onclick="go('about');return false" data-t="about"></a> · <a href="#" onclick="go('info');return false" data-t="info"></a> · <a href="#" onclick="go('legal');return false" data-t="legal"></a> · <a id="ml"></a><br>© PrintWorksLabs · v3</footer>
 <script>
 // ===== НАСТРОЙКИ / SETTINGS =====
 const OWNER_EMAIL="PRINTWORKSLABS.ee@gmail.com";
@@ -162,6 +163,10 @@ const $=id=>document.getElementById(id);
 const fmt=n=>n.toLocaleString(({ru:"ru-RU",et:"et-EE"}[L]||"en-US"))+" "+CUR;
 const P=id=>PRODUCTS.find(p=>p.id==id);
 const lamp=p=>(p.photos&&p.photos[0])?`<div class="lamp"><img src="${p.photos[0]}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`:`<div class="lamp" style="--h:${p.id*8+140}"><i style="width:${p.w}px;height:${p.h}px;border-radius:${p.w/2}px ${p.w/2}px 8px 8px"></i></div>`;
+function ld(k){try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){return null}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let U=ld("pl_u:"+ld("pl_cur"));
+function fill(m){if(!U)return;for(const[i,k]of m)if(!$(i).value)$(i).value=U[k]||""}
 function go(v,id){V=v;if(id){cur=id;pq=1;gi=0;col="white"}document.querySelectorAll(".v").forEach(e=>e.classList.toggle("on",e.id==="v-"+(v)));window.scrollTo(0,0);render();if(v==="cart")fill([["email","email"],["name","name"],["phone","phone"],["addr","addr"],["zip","zip"]]);if(v==="acc")fill([["a_email","email"],["a_name","name"],["a_phone","phone"],["a_addr","addr"]])}
 let gi=0,col="white";const SW={blue:"#2f6bff",white:"#f4f4f4",black:"#1a1a1a"},TINT={white:"#ffffff",blue:"#5b8cff",black:"#6b6b6b"};
 const SOCIAL={Instagram:"",WhatsApp:"",Telegram:"",TikTok:""}; // вставьте ссылки на ваши страницы
@@ -190,7 +195,7 @@ function render(){
  document.querySelectorAll("[data-t]").forEach(e=>e.textContent=t[e.dataset.t]);
  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
  const n=Object.values(Q).reduce((a,b)=>a+b,0);$("cnt").textContent=n;$("cnt").style.display="none";
- $("grid").innerHTML=PRODUCTS.map(p=>`<div class="card" onclick="go('prod',${p.id})">${lamp(p)}<h3>${p[L]}</h3><div class="row"><div class="price" style="margin:0">${fmt(p.price)}</div><button class="btn sm" onclick="event.stopPropagation();cur=${p.id};pq=1;col="white";addc(true)">${t.buy2}</button></div></div>`).join("");
+ $("grid").innerHTML=PRODUCTS.map(p=>`<div class="card" onclick="go('prod',${p.id})">${lamp(p)}<h3>${p[L]}</h3><div class="row"><div class="price" style="margin:0">${fmt(p.price)}</div><button class="btn sm" onclick="event.stopPropagation();cur=${p.id};pq=1;col='white';addc(true)">${t.buy2}</button></div></div>`).join("");
  const p=P(cur);
  $("pd").innerHTML=`${gal(p)}<div style="display:grid;gap:14px;align-content:start"><h1 style="margin:0">${p[L]}</h1><div class="price" style="font-size:24px">${fmt(p.price)}</div><p style="margin:0;color:var(--mut)">${p["d"+L]}</p>
  <div class="qty"><button onclick="pq=Math.max(1,pq-1);render()">−</button><b>${pq}</b><button onclick="pq++;render()">+</button></div>
@@ -218,9 +223,10 @@ async function sendMail(subject,body){
  if(WEB3_KEY.startsWith("ВСТАВЬТЕ"))return false;
  try{const r=await fetch("https://api.web3forms.com/submit",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({access_key:WEB3_KEY,subject,from_name:"PrintWorksLabs site",replyto:$("email").value,message:body})});const j=await r.json();return !!j.success}catch(e){return false}}
 async function sendConfirm(no,body){const E=EMAILJS;if(!E.key)return;try{await fetch("https://api.emailjs.com/api/v1.0/email/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({service_id:E.service,template_id:E.template,user_id:E.key,template_params:{to_email:$("email").value,to_name:$("name").value,order_no:no,message:body}})})}catch(e){}}
-$("f").onsubmit=async e=>{e.preventDefault();const t=T[L],c=calc();
+$("f").onsubmit=async e=>{e.preventDefault();$("fm").style.color="var(--mut)";$("fm").textContent="⏳ ...";try{await submitOrder(e);$("fm").textContent=""}catch(err){$("fm").style.color="#ff8080";$("fm").textContent="⚠ "+(err&&err.message||err)}};
+async function submitOrder(e){e.preventDefault();const t=T[L],c=calc();
  if(!c.s){alert(t.empty);return}
- const pay=document.querySelector("input[name=pay]:checked").value;
+ const pay=(document.querySelector("input[name=pay]:checked")||{value:"applepay"}).value;
  const lines=Object.keys(Q).filter(k=>Q[k]).map(k=>{const p=P(k.split("-")[0]);return `• ${p[L]} × ${Q[k]} = ${fmt(p.price*Q[k])}`}).join("\n");
  const no="PL-"+Date.now().toString(36).toUpperCase();const body=`PrintWorksLabs ${no} — ${new Date().toLocaleString()}\n\n${lines}\n\n${t.items}: ${fmt(c.s)}\n${t.delivery}: ${c.d?fmt(c.d):t.free} (${t[c.sh.k]})\n${t.total}: ${fmt(c.t)}${c.disc?" ("+t.disc+" -"+fmt(c.disc)+" "+$("promo").value.toUpperCase()+")":""}\n\n${t.name}: ${$("name").value}\n${t.phone}: ${$("phone").value}\nEmail: ${$("email").value||"-"}\n${t.country}: ${t[$("country").value]}\n${t.city}: ${$("city").value}\n${t.addr}: ${$("addr").value}\n${t.zip}: ${$("zip").value}\n${t.pay}: ${t[pay]}\n${t.note}: ${$("note").value||"-"}`;
  U=Object.assign(ld("pl_u:"+$("email").value)||{orders:[]},{email:$("email").value,name:$("name").value,phone:$("phone").value,addr:$("addr").value,zip:$("zip").value});U.orders.unshift({no,date:new Date().toLocaleDateString(),lines:Object.keys(Q).filter(k=>Q[k]).map(k=>P(k.split("-")[0])[L]+" ×"+Q[k]).join(", "),total:fmt(c.t)});sv("pl_u:"+U.email,U);sv("pl_cur",U.email);
